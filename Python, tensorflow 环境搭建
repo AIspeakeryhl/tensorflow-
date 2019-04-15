@@ -1,0 +1,84 @@
+windows
+1.打开Python官网，点download中的windows 打开WEB浏览器访问http://www.python.org/download/
+2.下载exe后缀的可执行文件，根据自己系统选择32位还是64位
+3. 安装时要记得勾上add python to Path 选项，意思是把Python的安装路径添加到系统环境变量的Path变量中
+4.根据需求安装
+
+
+环境变量配置
+一般装完直接可以从cmd中访问
+
+如果没有：
+首先需要在系统中注册python环境变量：
+假设python的安装路径为c:\python3.6，
+则修改我的电脑->属性->高级->环境变量->系统变量中的PATH为:
+PATH=PATH;c:\python36
+
+安装tensorflow
+pip install --upgrade --ignore-installed tensorflow
+pip install --upgrade --ignore-installed tensorflow-gpu
+python –m pip install --upgrade --ignore-installed tensorflow
+
+
+linux
+1. 安装依赖环境
+# yum -y install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel
+2.下载Python3
+官网
+# wget https://www.python.org/ftp/python/3.6.1/Python-3.6.1.tgz
+3. 安装python3
+# mkdir -p /usr/local/python3
+# tar -zxvf Python-3.6.1.tgz
+# cd Python-3.6.1
+# ./configure --prefix=/usr/local/python3
+# make
+#make install
+5.建立python3的软链
+# ln -s /usr/local/python3/bin/python3 /usr/bin/python3
+6.将/usr/local/python3/bin加入PATH
+# vim ~/.bash_profile
+# .bash_profile
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+Fi
+# User specific environment and startup programs
+PATH=$PATH:$HOME/bin：/usr/local/python3/bin
+export PATH
+按ESC，输入:wq 回车退出。
+# source ~/.bash_profile
+安装pip
+1、安装pip前需要前置安装setuptools
+wget --no-check-certificate  
+https://pypi.python.org/packages/source/s/setuptools/setuptools-19.6.tar.gz#md5=c607dd118eae682c44ed146367a17e26
+tar -zxvf setuptools-19.6.tar.gz
+cd setuptools-19.6
+python3 setup.py build
+python3 setup.py install
+2.安装pip
+wget --no-check-certificate  https://pypi.python.org/packages/source/p/pip/pip-8.0.2.tar.gz#md5=3a73c4188f8dbad6a1e6f6d44d117eeb
+tar -zxvf pip-8.0.2.tar.gz
+cd pip-8.0.2
+python3 setup.py build
+python3 setup.py install
+安装tensorflow
+
+最新版本的二进制文件链接地址，可以通过TensorFlow官网获取
+https://www.tensorflow.org/install/install_linux
+2. Pip 安装
+pip install tensorflow==2.0.0-alpha0 
+ip install tensorflow
+
+Python 编译器
+
+1.Cmd
+
+2. Vim
+
+3. pycharm python集成开发环境， 有免费版
+
+4. spyder3
+
+5.colab
+
+
