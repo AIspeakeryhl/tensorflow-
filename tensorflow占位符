@@ -1,0 +1,41 @@
+Placeholders占位符
+在不知道变量值的情况下，提前设置graph
+
+tf.placeholder(dtype, shape=None, name=None)
+对比
+tf.constant(
+   value,
+   dtype=None,
+   shape=None,
+   name='Const'
+)
+
+#如何在占位符输入值
+#用一个字典
+#feed_dict={key:value}
+
+a = tf.placeholder(tf.float32, shape=[3])
+
+b = tf.constant([5, 5, 5], tf.float32)
+
+c = a + b  
+
+with tf.Session() as sess:
+    print(sess.run(c, feed_dict={a: [1, 2, 3]}))
+#第二种方法
+with tf.Session() as sess:
+    print(sess.run(c, {a: [1, 2, 3]}))
+    
+如何输入多个数据点？
+
+with tf.Session() as sess:
+    for a_value in list_of_values_for_a:
+    print(sess.run(c, {a: a_value}))
+    
+不只针对变量，在其他函数中也可以feed数据    
+a = tf.add(2, 5)
+b = tf.multiply(a, 3)
+
+with tf.Session() as sess:
+    print(sess.run(b, feed_dict={a: 15}))
+    
