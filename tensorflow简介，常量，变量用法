@@ -1,0 +1,119 @@
+TensorFlow是一个基于数据流编程（dataflow programming）的符号数学系统，被广泛应用于各类机器学习（machine learning）算法的编程实现，其前身是谷歌的神经网络算法库DistBelief 。
+Tensorflow拥有多层级结构，可部署于各类服务器、PC终端和网页并支持GPU和TPU高性能数值计算，被广泛应用于谷歌内部的产品开发和各领域的科学研究
+TensorFlow由谷歌人工智能团队谷歌大脑（Google Brain）开发和维护，拥有包括TensorFlow Hub、TensorFlow Lite、TensorFlow Research Cloud在内的多个项目以及各类应用程序接口（Application Programming Interface, API） [2]  。自2015年11月9日起，TensorFlow依据阿帕奇授权协议（Apache 2.0 open source license）开放源代码  
+
+高阶接口
+Keras
+TFLearn
+Sonnet
+
+计算图方法（graph）
+第1阶段: 创建graph
+第2阶段: 使用会话(session)在graph中执行操作
+
+常量用法：
+import tensorflow as tf
+a = tf.constant(2)
+b = tf.constant(3)
+x = tf.add(a, b)
+with tf.Session() as sess:
+  print(sess.run(x))
+  
+保存图
+writer = tf.summary.FileWriter('./graphs', tf.get_default_graph())
+with tf.Session() as sess:
+#第二种保存方法
+# writer = tf.summary.FileWriter('./graphs', sess.graph) 
+    print(sess.run(x))
+#用完关闭
+writer.close()
+
+利用tensorboard对上面保存的图进行可视化
+tensorboard --logdir="./graphs" --port 6006
+python –m tensorboard.main --logdir="./graphs" --port 6006
+
+修改tensor名称
+a = tf.constant(2, name='a')
+b = tf.constant(3, name='b')
+x = tf.add(a, b, name='add')
+
+变量定义方法（两种）
+s = tf.Variable(2, name="scalar") 
+m = tf.Variable([[0, 1], [2, 3]], name="matrix") 
+W = tf.Variable(tf.zeros([784,10]))
+
+s = tf.get_variable("scalar", initializer=tf.constant(2)) 
+m = tf.get_variable("matrix", initializer=tf.constant([[0, 1], [2, 3]]))
+W = tf.get_variable("big_matrix", shape=(784, 10), initializer=tf.zeros_initializer())
+
+使用变量前先要初始化
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())#所有变量都初始化
+    
+W = tf.Variable(tf.zeros([784,10]))
+with tf.Session() as sess:
+    sess.run(W.initializer)#只初始化某个变量
+    print(W)
+输出值
+    print(W.eval())
+
+给变量赋值
+tf.Variable.assign()
+W = tf.Variable(10)
+assign_op = W.assign(100)
+with tf.Session() as sess:
+    sess.run(W.initializer)
+    print(W.eval())
+    sess.run(assign_op)
+    print(W.eval())
+
+#使用运算赋值
+
+import tensorflow as tf
+my_var = tf.Variable(2, name="my_var") 
+
+# 乘2运算
+my_var_times_two = my_var.assign(2 * my_var)
+
+with tf.Session() as sess:
+    sess.run(my_var.initializer)
+    sess.run(my_var_times_two)                 # >> the value of my_var now is 4
+    print(my_var.eval())
+    sess.run(my_var_times_two)                 # >> the value of my_var now is 8
+    print(my_var.eval())
+    sess.run(my_var_times_two)                 # >> the value of my_var now is 16
+    print(my_var.eval())
+   
+#每个会话独自保存计算结果
+
+import tensorflow as tf
+W = tf.Variable(10)
+
+sess1 = tf.Session()
+sess2 = tf.Session()
+
+sess1.run(W.initializer)
+sess2.run(W.initializer)
+
+print(sess1.run(W.assign_add(10)))         # >> 20
+print(sess2.run(W.assign_sub(2)))         # >> 8
+
+print(sess1.run(W.assign_add(100)))         
+print(sess2.run(W.assign_sub(50)))  
+
+sess1.close()
+sess2.close()
+
+
+控制操作顺序
+tf.Graph.control_dependencies(control_inputs)
+
+g = tf.get_default_graph()
+#g中有a,b,c,de
+with g.control_dependencies([a, b, c]):
+    d = ...
+    e = …
+#先进行a,b,c操作
+
+
+
