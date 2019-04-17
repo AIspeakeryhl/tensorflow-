@@ -1,0 +1,46 @@
+import tensorflow as tf
+import numpy as np
+
+#原始数据
+x=range(10)
+y=range(10)
+#需预测数据
+x_predict=[128,256,0.5,0.125]
+
+data={'x':x,'y':y}
+#重置向量图
+tf.reset_default_graph() 
+#为需要输入的数据添加占位符
+X = tf.placeholder(tf.float32, name='X')
+Y = tf.placeholder(tf.float32, name='Y')
+
+#为需要训练的参数添加变量
+w = tf.get_variable('w', initializer=tf.constant(0.0))
+b = tf.get_variable('b', initializer=tf.constant(0.0))
+
+#目标函数
+Y_predicted = w * X + b
+
+#损失函数
+loss = tf.square(Y - Y_predicted, name='loss')
+
+#优化器
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss)
+
+#在session中计算
+with tf.Session() as sess:
+    #初始化变量
+    sess.run(tf.global_variables_initializer()) 
+    
+    feed_dict={X: data['x'], Y:data['y']}
+    #训练
+    for i in range(10000):
+        sess.run(optimizer, feed_dict=feed_dict) 
+        #每步中输出损失
+        #loss_out=sess.run(loss,feed_dict=feed_dict)
+        
+    w_out, b_out = sess.run([w, b]) 
+    #预测
+    feed_dict={X: x_predict}
+    y_predict=sess.run(Y_predicted,feed_dict=feed_dict)
+    print(y_predict)
