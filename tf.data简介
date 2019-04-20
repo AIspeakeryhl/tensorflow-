@@ -1,0 +1,80 @@
+#tensorflow 数据处理
+#minist数据集进行逻辑回归
+
+#能否不用占位符（placeholder）喂数据
+tf.data
+tf.data.Dataset
+tf.data.Iterator
+#创建数据集
+tf.data.Dataset.from_tensors((features, labels))
+tf.data.Dataset.from_tensor_slices((features, labels))
+tf.data.Dataset.from_generator(gen, output_types, output_shapes)
+
+tf.data.TextLineDataset(filenames)#包含多个txt文件的行
+tf.data.FixedLengthRecordDataset(filenames)#来自一个或多个二进制文件的固定长度记录的数据集
+tf.data.TFRecordDataset(filenames)#包含多个TFRecord文件的记录
+
+#迭代器
+#只迭代一次
+iterator = dataset.make_one_shot_iterator()
+#任意多次（每次循环需要重新初始化）
+iterator = dataset.make_initializable_iterator()
+
+#单次迭代程序
+import tensorflow as tf
+
+x=[1,2,3]
+y=[1,2,3]
+
+dataset=tf.data.Dataset.from_tensor_slices((x, y))
+
+iterator = dataset.make_one_shot_iterator()
+X, Y = iterator.get_next()
+
+with tf.Session() as sess:
+    print(sess.run([X, Y]))       
+    print(sess.run([X, Y]))       
+    print(sess.run([X, Y]))
+    #print(sess.run([X, Y]))第四次输出会越界
+   
+#多次迭代程序
+import tensorflow as tf
+
+x=[1,2,3]
+y=[1,2,3]
+
+dataset=tf.data.Dataset.from_tensor_slices((x, y))
+
+iterator = dataset.make_initializable_iterator()
+X, Y = iterator.get_next()
+
+with tf.Session() as sess:
+    for i in range(3): 
+        sess.run(iterator.initializer) 
+        try:
+            while True:
+                print(sess.run([X, Y])) 
+        except tf.errors.OutOfRangeError:
+            pass
+
+#实现随机batch
+x=[1,2,3,4,5,6,7,8,9,10]
+y=[1,2,3,4,5,6,7,8,9,10]
+
+dataset=tf.data.Dataset.from_tensor_slices((x, y))
+
+dataset = dataset.repeat(5)#重复n次
+dataset = dataset.shuffle(50)#随机重排输入数据集，数值越大，混乱程度越大
+dataset = dataset.batch(5)#分成多份，每份n个
+
+iterator = dataset.make_initializable_iterator()
+X, Y = iterator.get_next()
+
+with tf.Session() as sess:
+    for i in range(1): 
+        sess.run(iterator.initializer) 
+        try:
+            while True:
+                print(sess.run([X, Y])) 
+        except tf.errors.OutOfRangeError:
+            pass
