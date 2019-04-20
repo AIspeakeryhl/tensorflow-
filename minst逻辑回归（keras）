@@ -1,0 +1,29 @@
+#MNIST Database
+#手写数字0—9
+#每张图是28*28黑白图
+#训练集: 55,000张
+#验证集: 5,000张
+#测试集: 10,000 张
+
+
+import tensorflow as tf
+mnist = tf.keras.datasets.mnist
+
+#读取数据
+(x_train, y_train),(x_test, y_test) = mnist.load_data()
+#归一化
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
+#单层逻辑回归模型y=softmax(wx+b)
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+  tf.keras.layers.Dense(10, activation=tf.nn.softmax)
+])
+#优化器：adam
+#损失函数：交叉熵
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.fit(x_train, y_train, epochs=5)
+model.evaluate(x_test, y_test)
