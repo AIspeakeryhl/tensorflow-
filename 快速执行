@@ -1,0 +1,59 @@
+tensorflow快速执行
+
+计算图的缺点：
+1.debug困难
+2.与python控制不同，数据结构不同
+3.placeholder,session太麻烦
+
+x=10
+x=tf.Variable(10)
+
+#循环操作
+import tensorflow as tf# version >= 1.50
+import tensorflow.contrib.eager as tfe
+tfe.enable_eager_execution()
+
+i = 0                 #i=tf.constant(0)
+while i < 10:         #with tf.Session() as sess:
+  i = tf.add(i, 1)		    #for i in range(10):
+  print(i)                    #print(sess.run(tf.add(i, 1)))
+  print('%d'%i)
+  
+#去除placeholder
+x = [[3.]]           #x = tf.placeholder(tf.float32, shape=[1, 1])
+m = tf.matmul(x, x)  #m = tf.matmul(x, x)
+                     #with tf.Session() as sess:
+                          #m_out = sess.run(m, feed_dict={x: [[2.]]})
+print(m)                  #print(m_out)
+
+#tensor 像数组一样操作
+import numpy as np
+x = tf.constant([1, 2, 3])
+
+assert type(x.numpy()) == np.ndarray
+squared = np.square(x) 
+ 
+for i in x:
+  print(i)
+for i in squared:
+  print(i)
+  
+#梯度
+x = tfe.Variable(2.0)
+def loss(y):
+  return (y - x) ** 2
+#偏导数
+grad = tfe.implicit_gradients(loss)
+#全导数
+grad1 = tfe.gradients_function(loss)
+
+print(loss(3.))  
+print(grad(3.))
+print(grad1(3.))
+
+快速执行本质上就是不用计算图graph
+何时用快速执行？
+1.新创一个自己的模型
+2.python老手，tensorlfow新手，需要快速上手
+
+在tensorflow2.0中，默认为快速执行
