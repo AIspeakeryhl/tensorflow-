@@ -1,0 +1,47 @@
+#保存和读取权重
+tf.train.Saver.save(sess, save_path)
+tf.train.Saver.restore(sess, save_path)
+
+#定义模型
+model = SkipGramModel(params)
+
+#优化器
+optimizer=tf.GradientDescentOptimizer(learning_rate=0.1)
+
+#创建保持器
+saver = tf.train.Saver()
+
+with tf.Session() as sess:
+	for step in range(training_steps): 
+		sess.run([optimizer])
+    
+  saver.save(sess, 'model_name')
+
+#四个文件
+checkpoint  保留至最新
+model.data-00000-of-00001 变量值
+model.index 变量目录
+model.meta  图结构
+
+#只保存某几个变量
+
+saver = tf.train.Saver({'v1': v1, 'v2': v2})
+saver = tf.train.Saver([v1, v2])
+saver = tf.train.Saver({v.op.name: v for v in [v1, v2]})
+
+
+with tf.Session() as sess:
+  saver.restore(sess, 'name_of_the_checkpoint')
+
+  #检查路径是否有检查点
+  ckpt = tf.train.get_checkpoint_state(os.path.dirname('checkpoints/checkpoint'))
+  #读取最新的保存
+  if ckpt and ckpt.model_checkpoint_path:
+     saver.restore(sess, ckpt.model_checkpoint_path)
+
+#全局步骤
+global_step = tf.Variable(0,trainable=False, name='global_step')
+
+optimizer.minimize(loss, global_step=global_step)
+
+saver.save(sess, 'model_name',global_step=global_step)
