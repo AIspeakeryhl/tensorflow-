@@ -1,0 +1,64 @@
+共享组名：
+with tf.name_scope(name_of_that_scope):
+	# declare op_1
+	# declare op_2
+
+with tf.name_scope('data'):
+    iterator = dataset.make_initializable_iterator()
+    center_words, target_words = iterator.get_next()
+    
+with tf.name_scope('embed'):
+    embed_matrix = tf.get_variable('embed_matrix', 
+                                    shape=[VOCAB_SIZE, EMBED_SIZE], ...)
+    embed = tf.nn.embedding_lookup(embed_matrix, center_words)
+
+with tf.name_scope('loss'):
+    nce_weight = tf.get_variable('nce_weight', shape=[VOCAB_SIZE, EMBED_SIZE], ...)
+    nce_bias = tf.get_variable('nce_bias', initializer=tf.zeros([VOCAB_SIZE]))
+    loss = tf.reduce_mean(tf.nn.nce_loss(weights=nce_weight, biases=nce_bias, …)
+
+with tf.name_scope('optimizer'):
+    optimizer = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(loss)
+
+#共享变量
+#无法共享的写法
+import tensorflow as tf
+
+def layers(x):
+    w1 = tf.Variable(tf.random_normal([5]), name='h1_weights')
+    b1 = tf.Variable(tf.zeros([5]), name='h1_biases')
+    h1 = x*w1 + b1
+    return h1
+  
+h1=layers(tf.ones([5]))
+h2=layers(tf.ones([5]))
+
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    print (sess.run(h1))
+    print (sess.run(h2))
+    
+tf.get_variable(<name>, <shape>, <initializer>)
+#如果一个变量已经存在，重新利用它
+#否则，初始化它
+
+import tensorflow as tf
+
+def layers(x):
+  w1 = tf.get_variable("weights", [5], initializer=tf.random_normal_initializer())
+  b1 = tf.get_variable("biases", [5], initializer=tf.constant_initializer(0.0))
+  h1 = x*w1 + b1
+  return h1
+
+#把需要共享参数的变量放在一个组里：
+with tf.variable_scope('layers') as scope:
+    scope.reuse_variables()
+    h1=layers(tf.ones([5]))
+    scope.reuse_variables()
+    h2=layers(tf.ones([5]))
+
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    print (sess.run(h1))
+    print (sess.run(h2))
+
