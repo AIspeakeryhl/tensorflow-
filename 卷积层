@@ -1,0 +1,103 @@
+卷积层
+
+卷积核，一般用5*5或3*3
+
+输出通道一般为64或128
+
+#输入为3通道，输出为64通道，一共几个卷积核？
+
+tensorflow中卷积层函数
+
+1.keras系列
+tf.layers.conv2d
+tf.keras.layers.Conv2D
+
+tf.layers.conv2d(
+    inputs,
+    filters,#输出通道数 64
+    kernel_size,#（3，3）
+    strides=(1, 1),#strides=1
+    padding='valid',#‘same’
+    data_format='channels_last',
+    dilation_rate=(1, 1),#如果你的strides不为1，dilation_rate暂不支持
+    activation=None,
+    #默认线性激活
+    #tf.keras.activations.relu
+    #tf.keras.activations.sigmoid
+    #tf.keras.activations.softmax
+    use_bias=True,
+    kernel_initializer=None,
+    #初始化不能为0
+    #tf.initializers.random_normal
+    #tf.initializers.random_uniform
+    bias_initializer=tf.zeros_initializer(),
+    kernel_regularizer=None,
+    #tf.keras.regularizers.l1
+    #tf.keras.regularizers.l2
+    bias_regularizer=None,
+    activity_regularizer=None,
+    trainable=True,
+    name=None,
+    reuse=None
+)
+#这个函数即将被删除
+
+tf.keras.layers.Conv2D
+
+2.tf.nn(参数少)
+需要自定义权重
+w=...
+tf.nn.conv2d(
+    input,
+    filter,#输入卷积核，形状为[高，宽，输入通道，输出通道]
+    strides,
+    padding,
+    use_cudnn_on_gpu=True,
+    data_format='NHWC',
+    dilations=[1, 1, 1, 1],#通道数两个维度必须为1 
+    name=None
+)
+#激活层
+tf.nn.relu
+tf.nn.softmax
+#正则化
+tf.nn.l2_loss
+
+3.contrib系列（功能多）
+tf.contrib.layers.conv2d(
+    inputs,
+    num_outputs,
+    kernel_size,
+    stride=1,
+    padding='SAME',
+    data_format=None,
+    rate=1,# dilation rate
+    activation_fn=tf.nn.relu,
+    #默认为relu
+    #tf.contrib.layers.softmax
+    normalizer_fn=None,
+    #归一化，代替biase
+    #tf.contrib.layers.batch_norm
+    normalizer_params=None,
+    weights_initializer=initializers.xavier_initializer(),
+    weights_regularizer=None,
+    #tf.contrib.layers.l1_regularizer
+    #tf.contrib.layers.l2_regularizer
+    biases_initializer=tf.zeros_initializer(),
+    biases_regularizer=None,
+    reuse=None,
+    variables_collections=None,#把变量加入到某个集合
+    outputs_collections=None,#把输出值加入到某个集合
+    trainable=True,
+    scope=None#name
+)
+
+小结：
+对初学者，建议使用
+tf.keras.layers.Conv2D
+简单，封装好的函数
+想要功能多一点可以使用
+tf.contrib.layers.conv2d
+
+想深入研究，特别是研究各网络参数的作用，自定义loss等
+用tf.nn.conv2d
