@@ -1,1 +1,123 @@
+池化层
+
+max pooling和average pooling
+
+池化区域一般是2*2
+
+全连接层
+
+一般放在最后
+
+#如何将卷积层和池化层结合在一起？
+stride
+
+tensorflow中池化层，全连接层函数
+
+1.keras系列
+tf.keras.layers.average_pooling2d（
+    inputs,
+    pool_size,
+    strides,
+    padding='valid',
+    data_format='channels_last',
+    name=None
+)
+#没有变量，没有参数
+
+tf.keras.layers.max_pooling2d（
+    inputs,
+    pool_size,
+    strides,
+    padding='valid',
+    data_format='channels_last',
+    name=None
+)
+
+tf.keras.layers.dense(
+    inputs,
+    units,#输出的维度
+    activation=None,
+    use_bias=True,
+    kernel_initializer=None,
+    bias_initializer=tf.zeros_initializer(),
+    kernel_regularizer=None,
+    bias_regularizer=None,
+    activity_regularizer=None,
+    kernel_constraint=None,
+    bias_constraint=None,
+    trainable=True,
+    name=None,
+    reuse=None
+)
+
+2.tf.nn
+需要自定义权重
+tf.nn.avg_pool(
+    value,
+    ksize,
+    strides,
+    padding,
+    data_format='NHWC',
+    name=None
+)
+
+tf.nn.max_pool(
+    value,
+    ksize,
+    strides,
+    padding,
+    data_format='NHWC',
+    name=None
+)
+
+#在tf.nn中你能找到全连接层函数吗？
+#https://www.tensorflow.org/api_docs/python/tf
+
+3.contrib系列
+tf.contrib.layers.avg_pool2d(
+    inputs,
+    kernel_size,
+    stride=2,
+    padding='VALID',#默认与卷积层相反
+    data_format=DATA_FORMAT_NHWC,
+    outputs_collections=None,
+    scope=None
+)
+
+tf.contrib.layers.max_pool2d(
+    inputs,
+    kernel_size,
+    stride=2,
+    padding='VALID',
+    data_format=DATA_FORMAT_NHWC,
+    outputs_collections=None,
+    scope=None
+)
+
+tf.contrib.layers.fully_connected(
+    inputs,
+    num_outputs,
+    activation_fn=tf.nn.relu,#
+    normalizer_fn=None,
+    normalizer_params=None,
+    weights_initializer=initializers.xavier_initializer(),
+    weights_regularizer=None,
+    biases_initializer=tf.zeros_initializer(),
+    biases_regularizer=None,
+    reuse=None,
+    variables_collections=None,#
+    outputs_collections=None,#
+    trainable=True,
+    scope=None
+)
+
+#请使用三种不同接口构建如下神经网络
+minst数据集
+1.卷积层，5*5，输出通道：64
+2.最大池化层，2*2
+3.卷积层，3*3，输出通道：128
+4.平均池化层，2*2
+5.全连接层输出通道512
+6.全连接层输出通道10
+7.softmax层
 
