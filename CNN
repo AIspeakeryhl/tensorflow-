@@ -1,0 +1,210 @@
+#请使用三种不同接口构建如下神经网络
+minst数据集
+1.卷积层，5*5，输出通道：64
+2.最大池化层，2*2
+3.卷积层，3*3，输出通道：128
+4.平均池化层，2*2
+5.全连接层输出通道512
+6.全连接层输出通道10
+7.softmax层
+
+#1.keras系列
+import tensorflow as tf
+import time
+mnist = tf.keras.datasets.mnist
+
+#读取数据
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+#归一化
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
+#模型
+#1.keras.layers中函数的每个词首字母要大写，2D要大写
+#2.MaxPool2D 和 AveragePooling2D的区别
+#3.利用keras.models.Sequential，不需要在函数中加入输入
+#4.利用keras.models.Sequential，每一层之后要加逗号
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Reshape((28,28,1)),
+    tf.keras.layers.Conv2D(64, (5,5), activation=tf.keras.activations.relu),
+    tf.keras.layers.MaxPool2D((2,2)),
+    tf.keras.layers.Conv2D(128, (3,3), activation=tf.keras.activations.relu),
+    tf.keras.layers.AveragePooling2D((2,2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(512, activation=tf.keras.activations.relu),
+    tf.keras.layers.Dense(10, activation=tf.keras.activations.softmax)
+])
+
+
+#选取训练参数
+model.compile(optimizer='SGD',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+#训练
+now=time.time()
+model.fit(x_train, y_train, epochs=5)
+#测试
+model.evaluate(x_test, y_test)
+print(time.time()-now)
+
+#tf.nn
+from tensorflow.examples.tutorials.mnist import input_data
+import numpy as np
+import tensorflow as tf
+import time
+
+data_dir = './data/'
+mnist = input_data.read_data_sets(data_dir, one_hot=True)
+ 
+#每批次数据集的大小
+#5epoch=5*60000/100=3000steps
+BATCH_SIZE = 100
+ 
+#学习率
+LEARNING_RATE_INIT = 1e-2   
+x = tf.placeholder(tf.float32, [None, 784])
+y_ = tf.placeholder(tf.float32, [None, 10])
+ 
+#对输入向量x转换成图像矩阵形式
+with tf.variable_scope('reshape'):
+    x_image = tf.reshape(x, [-1, 28, 28, 1]) 
+
+#模型：
+#1.需要自定义变量，初始化
+#2.重要参数不可省略
+#3.激活函数单独一层
+#卷积层1
+with tf.variable_scope('conv1'):
+    conv_1_w = tf.Variable(tf.truncated_normal([5,5,1,64], stddev=0.1))
+    conv_1_b = tf.Variable(tf.constant(0.1, shape=[64]))
+    conv_1_l = tf.nn.conv2d(x_image, conv_1_w, strides=[1,1,1,1], 
+                            padding='SAME') + conv_1_b
+    conv_1_h = tf.nn.relu(conv_1_l)
+
+#池化层1
+with tf.variable_scope('pool1'):
+    pool_1_h = tf.nn.max_pool(conv_1_h, ksize=[1,2,2,1], strides=[1,2,2,1], 
+                              padding='SAME')
+
+#卷积层2
+with tf.variable_scope('conv2'):
+    conv_2_w = tf.Variable(tf.truncated_normal([3,3,64,128], stddev=0.1))                     
+    conv_2_b = tf.Variable(tf.constant(0.1, shape=[128]))
+    conv_2_l = tf.nn.conv2d(pool_1_h, conv_2_w, strides=[1,1,1,1], 
+                            padding='SAME') + conv_2_b
+    conv_2_h = tf.nn.relu(conv_2_l)
+
+#池化层2
+with tf.name_scope('pool2'):
+    pool_2_h = tf.nn.avg_pool(conv_2_h, ksize=[1,2,2,1], strides=[1,2,2,1], 
+                              padding='SAME')
+
+#全连接层1
+with tf.name_scope('fc1'):
+    fc_1_w = tf.Variable(tf.truncated_normal([7*7*128, 512], stddev=0.1))
+    fc_1_b = tf.Variable(tf.constant(0.1, shape=[512]))
+    #全连接层的输入为向量,而池化层2的输出为7x7x128的矩阵,所以这里要将矩阵转化成一个向量
+    pool_2_h_flat = tf.reshape(pool_2_h, [-1,7*7*128])
+    fc_1_h = tf.nn.relu(tf.matmul(pool_2_h_flat, fc_1_w) + fc_1_b)
+        
+#全连接层2 And 输出层
+with tf.name_scope('fc2'):
+    fc_2_w = tf.Variable(tf.truncated_normal([512,10], stddev=0.1))
+    fc_2_b = tf.Variable(tf.constant(0.1, shape=[10]))
+    y = tf.matmul(fc_1_h, fc_2_w) + fc_2_b
+    
+#交叉熵
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2
+                               (labels=y_, logits=y))
+  
+#代价函数 
+total_loss = cross_entropy 
+ 
+#定义优化器
+opt=tf.train.GradientDescentOptimizer(LEARNING_RATE_INIT)
+train_step = opt.minimize(total_loss)
+ 
+with tf.Session() as sess:
+    now = time.time()
+    init_op = tf.global_variables_initializer()
+    sess.run(init_op)
+    #训练
+    for step in range(3000):
+        batch_xs, batch_ys = mnist.train.next_batch(BATCH_SIZE)
+        _, loss = sess.run([train_step, total_loss], 
+                           feed_dict={x: batch_xs, y_: batch_ys})
+        if step%600==0:
+            print(step, ':', loss) 
+    
+    #预测
+    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32)) 
+    test_accuracy = accuracy.eval(
+        feed_dict={x: mnist.test.images, y_: mnist.test.labels})
+    print(test_accuracy)
+    print(time.time() - now)
+    
+#3.contrib系列
+from tensorflow.examples.tutorials.mnist import input_data
+import numpy as np
+import tensorflow as tf
+import time
+
+data_dir = './data/'
+mnist = input_data.read_data_sets(data_dir, one_hot=True)
+ 
+#每批次数据集的大小
+#5epoch=5*60000/100=3000steps
+BATCH_SIZE = 100
+ 
+#学习率
+LEARNING_RATE_INIT = 1e-2   
+x = tf.placeholder(tf.float32, [None, 784])
+y_ = tf.placeholder(tf.float32, [None, 10])
+
+# 模型
+#1.注意池化层默认padding为‘valid’
+#2.默认激活函数为relu
+
+def fcn(images, is_training=True):
+        _ = tf.reshape(images, [-1,28, 28, 1]) 
+        _ = tf.contrib.layers.conv2d(_, 64, (5, 5))
+        _ = tf.contrib.layers.max_pool2d(_, (2, 2), 2, 'SAME')
+        _ = tf.contrib.layers.conv2d(_, 128, (3, 3))
+        _ = tf.contrib.layers.avg_pool2d(_, (2, 2), 2, 'SAME')
+        _ = tf.reshape(_,[-1, 7*7*128])
+        _ = tf.contrib.layers.fully_connected(_, 512)
+        _ = tf.contrib.layers.fully_connected(_, 10, activation_fn=None)
+        return _
+      
+y=fcn(x)
+#交叉熵
+cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2
+                               (labels=y_, logits=y))
+  
+#代价函数 
+total_loss = cross_entropy 
+ 
+#定义优化器
+opt=tf.train.GradientDescentOptimizer(LEARNING_RATE_INIT)
+train_step = opt.minimize(total_loss)
+ 
+
+with tf.Session() as sess:
+    now=time.time()
+    init_op = tf.global_variables_initializer()
+    sess.run(init_op)
+    #训练
+    for step in range(3000):
+        batch_xs, batch_ys = mnist.train.next_batch(BATCH_SIZE)
+        _, loss = sess.run([train_step, total_loss], 
+                           feed_dict={x: batch_xs, y_: batch_ys})
+        if step%600==0:
+            print(step,':',loss) 
+    
+    #预测
+    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32)) 
+    test_accuracy = accuracy.eval(
+        feed_dict={x: mnist.test.images, y_: mnist.test.labels})
+    print(test_accuracy)
+    print(time.time() - now)
