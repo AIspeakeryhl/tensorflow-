@@ -1,0 +1,95 @@
+变分自动编码器
+
+对图片编码
+对图片进行压缩，保留关键信息
+对图片解码
+学习训练图片之后，自动产生相似的图片
+
+#tensorflow 概率分布计算
+import tensorflow as tf
+a=[[1.1],[2.1],[3.2],[4.5],[5.0]]
+inputs=tf.Variable(a)
+hidden = tf.layers.dense(inputs, 100, tf.nn.relu)
+#均值
+mean = tf.layers.dense(hidden, 10, None)
+#标准差
+stddev = tf.layers.dense(hidden, 10, tf.nn.softplus)
+#分布
+tfd = tf.contrib.distributions
+#取样
+dist = tfd.MultivariateNormalDiag(mean, stddev)
+samples = dist.sample()
+dist.log_prob(samples)
+dist.prob(samples)
+
+#概率分布只能接受浮点运算类型
+dist = tfd.MultivariateNormalDiag([0.0,10.0], [1.0,5.0])
+sess=tf.Session()
+for i in range(10):
+  samples = dist.sample()
+  print(sess.run(samples))
+  print(sess.run(dist.prob(samples)))
+  
+#回归
+loss = -dist.log_prob(label)  
+optimize = tf.train.AdamOptimizer().minimize(loss)
+#分类
+dist = tfd.Categorical(logit)
+loss = -dist.log_prob(label)  
+optimize = tf.train.AdamOptimizer().minimize(loss)
+
+#tensorflow实现变分自动编码器
+import numpy as np
+import IPython.display as display
+import tensorflow as tf
+
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+def make_prior(code_size=100):
+  mean, stddev = tf.zeros([code_size]), tf.ones([code_size])
+  return tfd.MultivariateNormalDiag(mean, stddev)
+
+def make_encoder(images, code_size=100):
+  images = tf.layers.flatten(images)
+  hidden = tf.layers.dense(images, 128, tf.nn.relu)
+  mean = tf.layers.dense(hidden, code_size)
+  stddev = tf.layers.dense(hidden, code_size, tf.nn.softplus)
+  return tfd.MultivariateNormalDiag(mean, stddev)
+
+def make_decoder(code, data_shape=[28, 28]):
+  hidden = tf.layers.dense(code, 128, tf.nn.relu)
+  logit = tf.layers.dense(hidden, np.prod(data_shape))
+  logit = tf.reshape(logit, [-1] + data_shape)
+  return tfd.Independent(tfd.Bernoulli(logit), len(data_shape))
+
+tfd = tf.contrib.distributions
+#用minist数据集
+#输入图片
+images = tf.placeholder(tf.float32, [None, 28, 28])
+#初始先验概率
+prior = make_prior()
+#编码
+posterior = make_encoder(images)
+#解码
+dist = make_decoder(posterior.sample())
+#取样
+samples = make_decoder(prior.sample(10)).mean()
+#损失函数
+elbo =tf.reduce_mean(dist.log_prob(images)) - tf.reduce_mean(tfd.kl_divergence(posterior, prior))
+optimize = tf.train.AdamOptimizer(learning_rate=0.01).minimize(-elbo)
+
+mnist = tf.keras.datasets.mnist
+
+#读取数据
+(x_train, y_train),(x_test, y_test) = mnist.load_data()
+x_train=x_train/255.0
+
+sess=tf.Session()
+sess.run(tf.global_variables_initializer()) 
+           
+for i in range(10):
+  _, loss=sess.run([optimize,-elbo], feed_dict={images:x_train})
+  print(loss)
+  
+https://drive.google.com/open?id=1tDRo8ZGEqWNtXK516_8ZVB5wO_BrB8Ey
