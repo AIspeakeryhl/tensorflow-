@@ -1,0 +1,111 @@
+强化学习
+MDP--马尔可夫决策过程
+R，S，A，P，D
+Q learning和p learning
+
+gym
+Gym是OpenAI推出的开源的强化学习的环境生成工具 
+
+#Q learning
+import tensorflow as tf
+import gym
+#环境
+env = gym.make('')
+#初始化
+tf.reset_default_graph()
+#输入
+inputs = tf.placeholder(shape=[1,ns],dtype=tf.float32)
+#模型
+MDP
+#输出
+Qout = MDP(inputs) #长度为na
+predict = tf.argmax(Qout,1)
+#损失
+nextQ = tf.placeholder(shape=[1,na],dtype=tf.float32)
+loss = tf.reduce_sum(tf.square(nextQ - Qout))
+#优化器
+trainer = tf.train.GradientDescentOptimizer()
+op = trainer.minimize(loss)
+
+rList = []
+with tf.Session() as sess:
+    sess.run(init)
+    for i in range(100):
+        #重置环境
+        s = env.reset()
+        rAll = 0
+        for j in range(100):#s==target
+            #训练第一个动作
+            a,allQ = sess.run([predict,Qout],feed_dict={inputs:np.identity(ns)[s:s+1]})
+            #获得下一状态和奖励
+            s1,r= env.step(a)
+            #获得新的Q的值
+            Q1 = sess.run(Qout,feed_dict={inputs:np.identity(ns)[s1:s1+1]})
+            #得到目标Q
+            maxQ1 = np.max(Q1)
+            targetQ = r + y*maxQ1
+            #训练
+            _ = sess.run(op,feed_dict={inputs1:np.identity(ns)[s:s+1],nextQ:targetQ})
+            rAll += r
+            s = s1
+        rList.append(rAll)
+        
+ #使用Policy-Gradients
+class PolicyGradient:
+    # 初始化 
+    def __init__(self, n_actions, n_features, learning_rate=0.01, reward_decay=0.95, output_graph=False):
+
+    # 建立 policy gradient 神经网络 
+    def model(self):
+        #参数
+        self.ob = tf.placeholder(tf.float32, [None, self.n_features], name="observations")  # 接收 observation
+        self.act = tf.placeholder(tf.int32, [None, ], name="actions_num")   # 接收我们在这个回合中选过的 actions
+        self.vt = tf.placeholder(tf.float32, [None, ], name="actions_value") # 接收每个 state-action 所对应的 value (通过 reward 计算)
+        #网络
+        all_act=MDP(self.ob)
+        self.all_act_prob = tf.nn.softmax(all_act, name='act_prob')
+
+        # 最大化总体 reward (logp * R) 
+        neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=all_act, labels=self.act) # 所选 action 的概率 -log 值
+        loss = tf.reduce_mean(neg_log_prob * self.vt)  # (vt = 本轮reward + 衰减的未来reward) 引导参数的梯度下降
+        #优化器
+        self.train_op = tf.train.AdamOptimizer(self.lr).minimize(loss)
+    # 选行为 
+    def choose_action(self, observation):
+        prob_weights = self.sess.run(self.all_act_prob, 
+                      feed_dict={self.ob: observation[np.newaxis, :]})    # 所有 action 的概率
+        action = np.random.choice(range(prob_weights.shape[1]), p=prob_weights.ravel())  # 根据概率来选 action
+        return action
+    # transition 
+    def store_transition(self, s, a, r):
+        self.observations.append(s)
+        self.actions.append(a)
+        self.rewards.append(r)
+    # 衰减回合的 reward 
+    def _discount_and_norm_rewards(self):
+        discounted_ep_rewards = np.zeros_like(self.rewards)
+        running_add = 0
+        for t in reversed(range(0, len(self.rewards))):
+            #下一轮=以前总reward*gamma+本轮reward
+            running_add = running_add * self.gamma + self.reward[t]
+            discounted_ep_rewards[t] = running_add
+
+        # 归一化
+        discounted_ep_rewards -= np.mean(discounted_ep_rewards)
+        discounted_ep_rewards /= np.std(discounted_ep_rewards)
+        return discounted_ep_rewards
+    # 学习更新参数 
+    def learn(self, s, a, r, s_):
+        # 衰减, 并标准化这回合的 reward
+        discounted_ep_rs_norm = self._discount_and_norm_rewards()  
+
+        # train on episode
+        self.sess.run(self.train_op, feed_dict={
+             self.ob: np.vstack(self.observations),  # shape=[None, n_obs]
+             self.act: np.array(self.actions),  # shape=[None, ]
+             self.vt: discounted_ep_rs_norm,  # shape=[None, ]
+        })
+
+        self.observations, self.actions, self.ep_rewards = [], [], []    # 清空回合 data
+        return discounted_ep_rs_norm    # 返回这一回合的 state-action value
+    
