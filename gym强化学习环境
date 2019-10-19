@@ -1,0 +1,164 @@
+Gym构建自定义强化学习环境
+
+Gym开源库：测试问题的集合。
+Gym服务：提供一个站点和api，允许用户对他们的测试结果进行比较。
+
+Gym的核心接口是Env，包含下面几个核心方法：
+reset(self)：重置环境的状态，返回观察。
+step(self, action)：推进一个时间步长，返回observation，reward
+render(self, mode=’’, close=False)：重绘环境的一帧。
+
+#gym安装，至少需要python 2.7 或者 python 3.5 版本
+!pip install gym
+
+import random
+import gym
+
+class Env1(gym.Env):
+    metadata = {
+        'render.modes': ['human', 'rgb_array'],
+        'video.frames_per_second': 2
+    }
+
+    def __init__(self):
+        #状态空间
+        self.states = [[0,0],[0,1],[1,0],[1,1]]
+        
+        #终止状态为字典格式
+        self.terminate_states = dict()  
+        self.terminate_states[0] = 1
+
+        #动作空间
+        self.actions = ['n','e','s','w']
+
+        #回报的数据结构为字典
+        self.rewards = dict();        
+        self.rewards['0'] = 1.0
+
+        #状态转移的数据格式为字典
+        self.t = dict();             
+        self.t['0_s'] = 1
+        self.t['0_e'] = 1
+        self.t['1_w'] = 1
+        self.t['1_s'] = 2
+        self.t['2_n'] = 1
+        self.t['2_e'] = 3
+        self.t['3_n'] = 1
+        self.t['3_w'] = 1
+
+        #折扣因子
+        self.gamma = 0.9
+                 
+        self.viewer = None
+        self.state = None
+
+    def _seed(self, seed=None):
+        self.np_random, seed = random.seeding.np_random(seed)
+        return [seed]
+
+    def getTerminal(self):
+        return self.terminate_states
+
+    def getGamma(self):
+        return self.gamma
+
+    def getStates(self):
+        return self.states
+
+    def getAction(self):
+        return self.actions
+
+    def getTerminate_states(self):
+        return self.terminate_states
+
+    def setAction(self,s):
+        self.state=s
+
+    def step(self, action):
+        #系统当前状态
+        state = self.state
+        if state in self.terminate_states:
+            return state, 0, True, {}
+        
+        #状态转移
+        if key in self.t:
+            next_state = self.t[key]
+        else:
+            next_state = state
+        self.state = next_state
+
+        is_terminal = False
+
+        if next_state in self.terminate_states:
+            is_terminal = True
+
+        if key not in self.rewards:
+            r = 0.0
+        else:
+            r = self.rewards[key]
+
+        return next_state, r, is_terminal,{}
+
+    def reset(self):
+        self.state = self.states[int(random.random() * len(self.states))]
+        return self.state
+
+    def render(self, mode='human'):
+        from gym.envs.classic_control import rendering
+        screen_width = 400
+        screen_height = 400
+
+        if self.viewer is None:
+
+            self.viewer = rendering.Viewer(screen_width, screen_height)
+
+            #创建网格世界
+            self.line1 = rendering.Line((100,100),(300,100))
+            self.line2 = rendering.Line((100, 200), (300, 200))
+            self.line3 = rendering.Line((100, 300), (300, 300))
+            self.line4 = rendering.Line((100, 100), (100, 300))
+            self.line5 = rendering.Line((200, 100), (200, 300))
+            self.line6 = rendering.Line((300, 100), (300, 300))
+
+            #创建机器人
+            self.robot= rendering.make_circle(30)
+            self.robotrans = rendering.Transform()
+            self.robot.add_attr(self.robotrans)
+            self.robot.set_color(0, 1, 0)
+
+            #加入viewer
+            self.viewer.add_geom(self.line1)
+            self.viewer.add_geom(self.line2)
+            self.viewer.add_geom(self.line3)
+            self.viewer.add_geom(self.line4)
+            self.viewer.add_geom(self.line5)
+            self.viewer.add_geom(self.line6)
+            self.viewer.add_geom(self.robot)
+
+        if self.state is None: 
+            return None
+
+        self.robotrans.set_translation(self.state)
+
+        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+
+    def close(self):
+        if self.viewer:
+            self.viewer.close()
+
+#对环境进行注册
+from gym.envs.user.grid_mdp_v1 import Env1
+register(
+    id='v1',
+    entry_point='gym.envs.user:Env1',
+    max_episode_steps=200,
+    reward_threshold=100.0,
+    )
+    
+#对环境进行使用
+import gym
+
+env = gym.make('v1')
+env.reset()
+env.render()
+env.close()
