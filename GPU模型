@@ -1,0 +1,67 @@
+GPU支持
+多GPU模型
+
+硬件要求：
+英伟达显卡
+https://developer.nvidia.com/cuda-gpus
+软件要求：
+NVIDIA GPU驱动程序
+https://www.nvidia.com/Download/index.aspx?lang=en-us
+CUDA
+对通用GPU计算操作做了封装，方便其他组件调用
+https://developer.nvidia.com/cuda-zone
+
+
+!pip install tensorflow-gpu
+
+
+#查看gpu
+import tensorflow as tf
+gpu_device_name = tf.test.gpu_device_name()
+print(gpu_device_name)
+
+#查看可用的gpu数量
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import tensorflow as tf
+print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+
+from tensorflow.python.client import device_lib
+
+# 列出所有的本地机器设备
+local_device_protos = device_lib.list_local_devices()
+print(local_device_protos)
+
+#限制显存使用
+import tensorflow as tf
+
+# 设置显存使用上限
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7) 8G*0.7=5.6G 
+sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) 
+
+# 按需取用
+gpu_options = tf.GPUOptions(allow_growth=True)  4G  6G 
+sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+
+
+#keras
+import tensorflow as tf
+from keras.applications import Xception
+from keras.utils import multi_gpu_model
+
+#cpu
+with tf.device('/device:CPU:0'):
+  model= Xception(weights=None, input_shape=(w,h,3), classes=100)
+
+#单个gpu
+with tf.device('/device:GPU:0'):
+  model= Xception(weights=None, input_shape=(w,h,3), classes=100)
+
+#多个gpu
+model1=multi_gpu_model(model , gpus=8)
+model1.compile(loss='crossentropy',optimizer='adam')
+
+#训练
+model1.fit(x,y,batch_size=256)
+#单个gpu的batch_size=256/8=32
+
