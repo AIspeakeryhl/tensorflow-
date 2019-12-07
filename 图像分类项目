@@ -1,0 +1,311 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import tensorflow as tf
+
+from tensorflow.keras import datasets, layers, models
+import matplotlib.pyplot as plt
+
+#cifar100数据集
+(train_images, train_labels), (test_images, test_labels) = datasets.cifar100.load_data()
+
+#归一化
+train_images, test_images = train_images / 255.0, test_images / 255.0
+
+print(len(train_images))
+print(len(test_images))
+
+dic = {}
+for label in train_labels:
+  x = int(label)
+  if x not in dic:
+    dic[x] = 1
+  else:
+    dic[x] += 1
+print(dic)
+
+print(train_images[0].shape)
+print(train_images[100].shape)
+print(train_images[10000].shape)
+
+plt.figure(figsize=(10,10))
+for i in range(25):
+    plt.subplot(5,5,i+1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.grid(False)
+    plt.imshow(train_images[i], cmap=plt.cm.binary)
+    plt.xlabel(train_labels[i][0])
+plt.show()
+
+#搭建模型
+model = models.Sequential()
+model.add(layers.Conv2D(64, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model.add(layers.MaxPooling2D((2, 2)))
+model.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D((2, 2)))
+model.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model.add(layers.Flatten())
+model.add(layers.Dense(512, activation='relu'))
+model.add(layers.Dense(100, activation='softmax'))
+
+#在小规模训练集上训练
+train_images1 = train_images[0:100]
+train_labels1 = train_labels[0:100]
+
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model.fit(train_images1, train_labels1, epochs=100)
+
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history.history['loss'], label='loss')
+plt.plot(history.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+#减小模型
+model1 = models.Sequential()
+model1.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model1.add(layers.MaxPooling2D((2, 2)))
+model1.add(layers.Conv2D(32, (3, 3), activation='relu'))
+model1.add(layers.MaxPooling2D((2, 2)))
+model1.add(layers.Conv2D(32, (3, 3), activation='relu'))
+model1.add(layers.Flatten())
+model1.add(layers.Dense(100, activation='softmax'))
+
+model1.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history1 = model1.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history1.history['loss'], label='loss')
+plt.plot(history1.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+#正则化
+model2 = models.Sequential()
+model2.add(layers.Conv2D(64, (3, 3), activation='relu', input_shape=(32, 32, 3), kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model2.add(layers.MaxPooling2D((2, 2)))
+model2.add(layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model2.add(layers.MaxPooling2D((2, 2)))
+model2.add(layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model2.add(layers.Flatten())
+model2.add(layers.Dense(512, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model2.add(layers.Dense(100, activation='softmax', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+
+model2.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history2 = model2.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history2.history['loss'], label='loss')
+plt.plot(history2.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+
+#正则化
+model3 = models.Sequential()
+model3.add(layers.Conv2D(64, (3, 3), activation='relu', input_shape=(32, 32, 3), kernel_regularizer=tf.keras.regularizers.l2(l=0.005)))
+model3.add(layers.MaxPooling2D((2, 2)))
+model3.add(layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.005)))
+model3.add(layers.MaxPooling2D((2, 2)))
+model3.add(layers.Conv2D(128, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.005)))
+model3.add(layers.Flatten())
+model3.add(layers.Dense(512, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.005)))
+model3.add(layers.Dense(100, activation='softmax', kernel_regularizer=tf.keras.regularizers.l2(l=0.005)))
+
+model3.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history3 = model3.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history3.history['loss'], label='loss')
+plt.plot(history3.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+#正则化+减小参数
+model4 = models.Sequential()
+model4.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3), kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.MaxPooling2D((2, 2)))
+model4.add(layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.MaxPooling2D((2, 2)))
+model4.add(layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.Flatten())
+model4.add(layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.Dense(100, activation='softmax', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+
+model4.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history4 = model4.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history4.history['loss'], label='loss')
+plt.plot(history4.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+#搭建模型，droupout
+model5 = models.Sequential()
+model5.add(layers.Conv2D(64, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model5.add(layers.MaxPooling2D((2, 2)))
+model5.add(layers.Dropout(0.2))
+model5.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model5.add(layers.MaxPooling2D((2, 2)))
+model5.add(layers.Dropout(0.2))
+model5.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model5.add(layers.Flatten())
+model5.add(layers.Dense(512, activation='relu'))
+model5.add(layers.Dense(100, activation='softmax'))
+
+model5.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history5 = model5.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history5.history['loss'], label='loss')
+plt.plot(history5.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+#搭建模型，droupout
+model6 = models.Sequential()
+model6.add(layers.Conv2D(64, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model6.add(layers.MaxPooling2D((2, 2)))
+model6.add(layers.Dropout(0.1))
+model6.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model6.add(layers.MaxPooling2D((2, 2)))
+model6.add(layers.Dropout(0.1))
+model6.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model6.add(layers.Flatten())
+model6.add(layers.Dense(512, activation='relu'))
+model6.add(layers.Dense(100, activation='softmax'))
+
+model6.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history6 = model6.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history6.history['loss'], label='loss')
+plt.plot(history6.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+#搭建模型，droupout
+model7 = models.Sequential()
+model7.add(layers.Conv2D(64, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model7.add(layers.MaxPooling2D((2, 2)))
+model7.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model7.add(layers.MaxPooling2D((2, 2)))
+model7.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model7.add(layers.Flatten())
+model7.add(layers.Dense(512, activation='relu'))
+model7.add(layers.Dropout(0.2))
+model7.add(layers.Dense(100, activation='softmax'))
+
+model7.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history7 = model7.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+                    plt.plot(history7.history['loss'], label='loss')
+plt.plot(history7.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
+
+#正则化+减小参数
+model4 = models.Sequential()
+model4.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3), kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.MaxPooling2D((2, 2)))
+model4.add(layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.MaxPooling2D((2, 2)))
+model4.add(layers.Conv2D(64, (3, 3), activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.Flatten())
+model4.add(layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+model4.add(layers.Dense(100, activation='softmax', kernel_regularizer=tf.keras.regularizers.l2(l=0.0005)))
+
+model4.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model4.fit(train_images, train_labels, epochs=20, initial_epoch=0
+                    validation_data=(test_images, test_labels))
+                    
+model4.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model4.fit(train_images, train_labels, epochs=40,
+                    validation_data=(test_images, test_labels))
+                    
+model4.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.002),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model4.fit(train_images, train_labels, epochs=20, 
+                    validation_data=(test_images, test_labels))
+                    
+model4.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model4.fit(train_images, train_labels, epochs=20, initial_epoch=0,
+                    validation_data=(test_images, test_labels))
+                    
+model4.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model4.fit(train_images, train_labels, epochs=40,
+                    validation_data=(test_images, test_labels))
+                   
+model4.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005), 
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history = model4.fit(train_images, train_labels, epochs=15,
+                    validation_data=(test_images, test_labels))
+
+model4.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.00005),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+history1 = model4.fit(train_images, train_labels, epochs=5,
+                    validation_data=(test_images, test_labels))
+                    
+plt.plot(history.history['loss']+history1.history['loss'],label='loss')
+plt.plot(history.history['val_loss']+history1.history['val_loss'], label = 'val_loss')
+plt.xlabel('Epoch')
+plt.ylabel('loss')
+plt.legend(loc='lower right')
