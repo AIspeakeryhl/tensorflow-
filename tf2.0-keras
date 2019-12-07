@@ -1,0 +1,112 @@
+#读取模型
+fashion_mnist = tf.keras.datasets.fashion_mnist
+
+(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+
+#获得图片大小
+train_images.shape
+#打印图例
+import numpy as np
+import matplotlib.pyplot as plt
+def plotImages(images_arr):
+    fig, axes = plt.subplots(1, 5, figsize=(10,10))
+    axes = axes.flatten()
+    for img, ax in zip( images_arr, axes):
+        ax.imshow(img)
+        ax.axis('off')
+    plt.tight_layout()
+    plt.show()
+plotImages(train_images[:5])
+
+#归一化
+train_images = train_images / 255.0
+test_images = test_images / 255.0
+
+#全链接层模型
+model = tf.keras.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(128, activation='relu', bias=False, trainable=False),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+#模型总结
+model.summary()
+#编译
+model.compile(optimizer='adam',
+      loss='sparse_categorical_crossentropy', categorical_crossentropy->[1,0,0,0,0]
+      metrics=['accuracy']) 
+      
+#训练
+model.fit(train_images, train_labels, epochs=10, validation_data=(test_images, test_labels))
+#模型权重
+model.variables
+
+# 保存权重
+model.save_weights('./fashion_mnist/my_checkpoint')
+
+# 恢复权重
+model.load_weights('./fashion_mnist/my_checkpoint')
+# model1.load_weights('./fashion_mnist/my_checkpoint') 
+
+# 预测
+loss,acc = model.evaluate(test_images,  test_labels, verbose=2)
+print("Restored model, accuracy: {:5.2f}%".format(100*acc))
+
+#保存整个模型
+model.save('my_model.h5')
+new_model = tf.keras.models.load_model('my_model.h5')
+loss, acc = new_model.evaluate(test_images,  test_labels, verbose=2)
+print("Restored model, accuracy: {:5.2f}%".format(100*acc))
+
+# 在文件名中包含 epoch (使用 `str.format`)
+checkpoint_path = "fashion_mnist_1/cp-{epoch:04d}.ckpt"
+
+# 创建一个回调，每个epoch保存模型的权重
+cp_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_path, 
+    save_weights_only=True,
+    period=1) #save_freq = ‘epoch'/n samples 60000 100 600
+
+# 使用 `checkpoint_path` 格式保存权重
+model.save_weights(checkpoint_path.format(epoch=0))
+
+# 使用新的回调训练模型
+model.fit(train_images, 
+              train_labels,
+              epochs=5, 
+              callbacks=[cp_callback],
+              validation_data=(test_images,test_labels))
+              
+#CNN模型
+train_images = train_images[..., tf.newaxis]
+test_images = test_images[..., tf.newaxis]
+
+model1 = tf.keras.Sequential()
+model1.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)))
+model1.add(tf.keras.layers.MaxPooling2D((2, 2)))
+model1.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+model1.add(tf.keras.layers.MaxPooling2D((2, 2)))
+model1.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+model1.add(tf.keras.layers.Flatten())
+model1.add(tf.keras.layers.Dense(256, activation='relu'))
+model1.add(tf.keras.layers.Dense(10, activation='softmax'))
+
+model1.compile(optimizer='adam',
+      loss='sparse_categorical_crossentropy',
+      metrics=['accuracy'])
+      
+model1.fit(train_images, train_labels, 
+           batchsize=64,
+           epochs=10, validation_data=(test_images, test_labels))
+
+#RNN
+model2 = tf.keras.Sequential()
+model2.add(tf.keras.layers.LSTM(128,input_shape=(None,28))) batchsize,28,28
+# model2.add(tf.keras.layers.LSTM(128, return_sequences=True))
+#(hidden size * (hidden size + input_dim ) + hidden size) *4
+model2.add(tf.keras.layers.Dense(10, activation='softmax'))
+
+model2.compile(optimizer='adam',
+      loss='sparse_categorical_crossentropy',
+      metrics=['accuracy'])
+
+model2.fit(train_images, train_labels, epochs=10, validation_data=(test_images, test_labels))
