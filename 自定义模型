@@ -1,0 +1,72 @@
+from tensorflow.keras import layers
+
+#自定义线性层
+class Linear(layers.Layer): 
+  def __init__(self, units=32, input_dim=28):
+    super(Linear, self).__init__()
+    w_init = tf.random_normal_initializer()
+    self.w = tf.Variable(initial_value=w_init(shape=(input_dim, units),dtype='float32'),trainable=False)
+    #self.w = self.add_weight(shape=(input_dim, units),initializer='random_normal',trainable=True)
+    b_init = tf.zeros_initializer()
+    self.b = tf.Variable(initial_value=b_init(shape=(units,),dtype='float32'),trainable=False)
+
+  def call(self, inputs): 
+    return tf.matmul(inputs, self.w) + self.b
+
+inputs = tf.ones((2, 2)) 
+linear_layer = Linear(4, 2)
+print(linear_layer.w)
+outputs = linear_layer(inputs)
+print(linear_layer.w)
+
+#input_dim未知
+class Linear(layers.Layer):
+
+  def __init__(self, units=32):
+    super(Linear, self).__init__()
+    self.units = units
+
+  def build(self, input_shape):
+    self.w = self.add_weight(shape=(input_shape[-1], self.units),
+                             initializer='random_normal',
+                             trainable=True)
+    self.b = self.add_weight(shape=(self.units,),
+                             initializer='random_normal',
+                             trainable=True)
+
+  def call(self, inputs):
+    return tf.matmul(inputs, self.w) + self.b
+
+inputs = tf.ones((2, 2))
+linear_layer = Linear(4)
+outputs = linear_layer(inputs)
+print(linear_layer.w)
+
+#模型
+class MLPBlock(layers.Layer):
+
+  def __init__(self):
+    super(MLPBlock, self).__init__()
+    self.linear_1 = Linear(32)
+    self.linear_2 = Linear(32)
+    self.linear_3 = Linear(1)
+
+  def call(self, inputs):
+    x = self.linear_1(inputs)
+    x = tf.nn.relu(x)
+    x = self.linear_2(x)
+    x = tf.nn.relu(x)
+    return self.linear_3(x)
+
+#训练
+optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
+loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+
+for x_batch_train, y_batch_train in train_dataset:
+  #取一个batch
+  with tf.GradientTape() as tape:   
+    logits = layer(x_batch_train)  
+    loss_value = loss_fn(y_batch_train, logits)
+  #？为什么在with外面
+  grads = tape.gradient(loss_value, model.trainable_weights)
+  optimizer.apply_gradients(zip(grads, model.trainable_weights))
